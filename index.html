@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Red FES Acatlán — Grafo del Campus</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+ 
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --text: #e8eaf0;
+    --text2: #8b90a8;
+    --blue: #4f8ef7;
+    --red: #f25f5c;
+    --green: #3ec97e;
+    --purple: #a78bfa;
+    --amber: #f59e0b;
+    --brown: #d97706;
+    --path: #f59e0b;
+  }
+ 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+ 
+  header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--surface);
+  }
+ 
+  .logo {
+    display: flex;
+    flex-direction: column;
+  }
+ 
+  .logo-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+ 
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.08em;
+  }
+ 
+  .legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+ 
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'Space Mono', monospace;
+  }
+ 
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+ 
+  .controls {
+    padding: 12px 28px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+ 
+  button {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+ 
+  button:hover { border-color: var(--blue); color: var(--blue); }
+  button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  button.primary:hover { background: #3a7ef0; }
+  button:disabled { opacity: 0.3; cursor: default; }
+ 
+  .sep { width: 1px; height: 20px; background: var(--border); }
+ 
+  .hint {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+    margin-left: auto;
+  }
+ 
+  #info-bar {
+    padding: 10px 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+ 
+  .info-highlight { color: var(--amber); font-weight: 700; }
+ 
+  canvas-wrap {
+    display: block;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+ 
+  canvas {
+    display: block;
+    width: 100%;
+    height: calc(100vh - 180px);
+    min-height: 400px;
+    cursor: default;
+  }
+ 
+  .stats {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+    line-height: 1.8;
+  }
+ 
+  .stats span { color: var(--text); }
+</style>
+</head>
+<body>
+ 
+<header>
+  <div class="logo">
+    <div class="logo-title">Red de Movilidad — FES Acatlán</div>
+    <div class="logo-sub">GRAFO DEL CAMPUS · 31 NODOS · 57 ARISTAS</div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:#4f8ef7"></div>Edificios (A1–A15)</div>
+    <div class="legend-item"><div class="dot" style="background:#f25f5c"></div>Cafeterías (C1–C7)</div>
+    <div class="legend-item"><div class="dot" style="background:#3ec97e"></div>Explanadas (E)</div>
+    <div class="legend-item"><div class="dot" style="background:#a78bfa"></div>Módulos (M)</div>
+    <div class="legend-item"><div class="dot" style="background:#d97706"></div>Biblioteca</div>
+  </div>
+</header>
+ 
+<div class="controls">
+  <button class="primary" onclick="runDijkstra()">▶ Ruta más corta</button>
+  <button onclick="clearAll()">✕ Limpiar</button>
+  <div class="sep"></div>
+  <button onclick="zoomIn()">＋ Zoom</button>
+  <button onclick="zoomOut()">－ Zoom</button>
+  <button onclick="resetView()">⊡ Ajustar</button>
+  <div class="hint">Clic: selecciona nodo &nbsp;|&nbsp; Rueda: zoom &nbsp;|&nbsp; Arrastrar: mover</div>
+</div>
+ 
+<div id="info-bar">Selecciona <span class="info-highlight">ORIGEN</span> (primer clic) y <span class="info-highlight">DESTINO</span> (segundo clic), luego presiona "Ruta más corta".</div>
+ 
+<canvas-wrap>
+  <canvas id="c"></canvas>
+  <div class="stats">
+    Nodos: <span>31</span><br>
+    Aristas: <span>57</span><br>
+    Peso mín: <span>3 m (E8–A7)</span><br>
+    Peso máx: <span>380 m (A11–A14)</span>
+  </div>
+</canvas-wrap>
+ 
+<script>
+const NODE_R = 18;
+const nodes = {
+  A1:     {x:70,   y:240, color:'#4f8ef7', label:'A1'},
+  A2:     {x:70,   y:340, color:'#4f8ef7', label:'A2'},
+  A3:     {x:265,  y:395, color:'#4f8ef7', label:'A3'},
+  A4:     {x:300,  y:262, color:'#4f8ef7', label:'A4'},
+  A5:     {x:392,  y:100, color:'#4f8ef7', label:'A5'},
+  A6:     {x:382,  y:202, color:'#4f8ef7', label:'A6'},
+  A7:     {x:605,  y:165, color:'#4f8ef7', label:'A7'},
+  A8:     {x:585,  y:258, color:'#4f8ef7', label:'A8'},
+  A9:     {x:805,  y:228, color:'#4f8ef7', label:'A9'},
+  A10:    {x:772,  y:348, color:'#4f8ef7', label:'A10'},
+  A11:    {x:892,  y:398, color:'#4f8ef7', label:'A11'},
+  A12:    {x:892,  y:172, color:'#4f8ef7', label:'A12'},
+  A13:    {x:1042, y:222, color:'#4f8ef7', label:'A13'},
+  A14:    {x:1062, y:402, color:'#4f8ef7', label:'A14'},
+  A15:    {x:348,  y:488, color:'#4f8ef7', label:'A15'},
+  C1:     {x:228,  y:332, color:'#f25f5c', label:'C1'},
+  C2:     {x:428,  y:568, color:'#f25f5c', label:'C2'},
+  C3:     {x:300,  y:112, color:'#f25f5c', label:'C3'},
+  C4:     {x:652,  y:338, color:'#f25f5c', label:'C4'},
+  C5:     {x:852,  y:115, color:'#f25f5c', label:'C5'},
+  C6:     {x:942,  y:478, color:'#f25f5c', label:'C6'},
+  C7:     {x:1012, y:162, color:'#f25f5c', label:'C7'},
+  E4:     {x:168,  y:262, color:'#3ec97e', label:'E4'},
+  ES:     {x:442,  y:298, color:'#3ec97e', label:'ES'},
+  E8:     {x:512,  y:182, color:'#3ec97e', label:'E8'},
+  ED:     {x:907,  y:272, color:'#3ec97e', label:'ED'},
+  EC:     {x:987,  y:338, color:'#3ec97e', label:'EC'},
+  M3:     {x:502,  y:258, color:'#a78bfa', label:'M3'},
+  M5:     {x:732,  y:262, color:'#a78bfa', label:'M5'},
+  M6:     {x:822,  y:342, color:'#a78bfa', label:'M6'},
+  Biblio: {x:542,  y:372, color:'#d97706', label:'Biblio'},
+};
+ 
+const edges = [
+  ['A1','E4',100],['A2','C1',15],['E4','C1',80],['E4','C3',150],
+  ['C3','A5',40],['C3','A4',130],['C3','A6',80],['A5','E8',60],
+  ['A6','A4',30],['A6','E8',30],['A6','ES',15],['E8','M3',4],
+  ['E8','A7',3],['M3','A8',80],['M3','ES',25],['ES','Biblio',30],
+  ['ES','A4',50],['A7','A8',10],['A7','M5',100],['A8','C4',30],
+  ['A8','M5',80],['A8','A10',70],['C4','Biblio',30],['C4','A10',60],
+  ['C4','M5',80],['C4','M6',70],['A10','M5',35],['A10','M6',10],
+  ['A10','A11',20],['M5','A9',35],['M5','M6',55],['M6','A9',8],
+  ['M6','A11',50],['A9','C5',100],['A9','A12',20],['A9','ED',30],
+  ['C5','A12',40],['A12','ED',10],['A12','C7',100],['ED','A11',50],
+  ['ED','C7',20],['ED','EC',15],['A11','C6',100],['A11','A14',380],
+  ['C6','A15',150],['C6','A11',100],['C7','EC',350],['C7','A13',100],
+  ['C7','A14',20],['EC','A13',30],['A13','A14',50],['A15','C2',150],
+  ['A15','C6',240],['A3','C1',40],['A3','A15',210],['C1','A4',50],
+  ['A1','E4',100],
+];
+ 
+// Deduplicate
+const edgeSet = new Map();
+for(const [u,v,w] of edges){
+  const k=[u,v].sort().join('|');
+  if(!edgeSet.has(k)) edgeSet.set(k,{u,v,w});
+}
+const edgeList = [...edgeSet.values()];
+ 
+const adj = {};
+for(const n in nodes) adj[n]=[];
+for(const {u,v,w} of edgeList){
+  adj[u].push({node:v,w});
+  adj[v].push({node:u,w});
+}
+ 
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const dpr = window.devicePixelRatio||1;
+ 
+let scale=1, offX=0, offY=0;
+let dragging=false, lastMX=0, lastMY=0;
+let hoveredNode=null, selected=[], dijkPath=[];
+ 
+function fit(){
+  const xs=Object.values(nodes).map(n=>n.x);
+  const ys=Object.values(nodes).map(n=>n.y);
+  const nw=Math.max(...xs)-Math.min(...xs)+100;
+  const nh=Math.max(...ys)-Math.min(...ys)+100;
+  const cw=canvas.width/dpr, ch=canvas.height/dpr;
+  scale=Math.min(cw/nw,ch/nh)*0.9;
+  offX=(cw-nw*scale)/2-Math.min(...xs)*scale+50*scale;
+  offY=(ch-nh*scale)/2-Math.min(...ys)*scale+50*scale;
+}
+ 
+function resize(){
+  const cw=canvas.parentElement.clientWidth||window.innerWidth;
+  const ch=Math.max(400, window.innerHeight-180);
+  canvas.width=cw*dpr; canvas.height=ch*dpr;
+  canvas.style.width=cw+'px'; canvas.style.height=ch+'px';
+  ctx.scale(dpr,dpr);
+  fit(); draw();
+}
+ 
+function tx(x){return x*scale+offX;}
+function ty(y){return y*scale+offY;}
+ 
+function isInPath(u,v){
+  for(let i=0;i<dijkPath.length-1;i++){
+    if((dijkPath[i]===u&&dijkPath[i+1]===v)||(dijkPath[i]===v&&dijkPath[i+1]===u)) return true;
+  }
+  return false;
+}
+ 
+function draw(){
+  const cw=canvas.width/dpr, ch=canvas.height/dpr;
+  ctx.clearRect(0,0,cw,ch);
+ 
+  // Grid subtle background
+  ctx.strokeStyle='rgba(46,51,80,0.4)';
+  ctx.lineWidth=0.5;
+  const gs=40*scale;
+  for(let x=(offX%gs);x<cw;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,ch);ctx.stroke();}
+  for(let y=(offY%gs);y<ch;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cw,y);ctx.stroke();}
+ 
+  // Edges
+  for(const {u,v,w} of edgeList){
+    const nu=nodes[u], nv=nodes[v];
+    const inPath=dijkPath.length>1&&isInPath(u,v);
+    ctx.beginPath();
+    ctx.moveTo(tx(nu.x),ty(nu.y));
+    ctx.lineTo(tx(nv.x),ty(nv.y));
+    if(inPath){
+      ctx.strokeStyle='#f59e0b';
+      ctx.lineWidth=3.5;
+      ctx.shadowColor='#f59e0b';
+      ctx.shadowBlur=8;
+    } else {
+      ctx.strokeStyle='rgba(139,144,168,0.2)';
+      ctx.lineWidth=1;
+      ctx.shadowBlur=0;
+    }
+    ctx.stroke();
+    ctx.shadowBlur=0;
+ 
+    // Weight label
+    if(scale>0.45){
+      const mx=(tx(nu.x)+tx(nv.x))/2;
+      const my=(ty(nu.y)+ty(nv.y))/2;
+      ctx.font=`${Math.max(8,9*scale)}px 'Space Mono', monospace`;
+      ctx.fillStyle=inPath?'#f59e0b':'rgba(139,144,168,0.6)';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(w+'m', mx, my-6*scale);
+    }
+  }
+ 
+  // Nodes
+  for(const [id,n] of Object.entries(nodes)){
+    const r=Math.max(13,NODE_R*scale);
+    const isOrig=selected[0]===id;
+    const isDest=selected[1]===id;
+    const inPath=dijkPath.includes(id);
+    const hov=hoveredNode===id;
+ 
+    // Glow for path/selected
+    if(inPath||isOrig||isDest){
+      ctx.beginPath();
+      ctx.arc(tx(n.x),ty(n.y),r+6,0,Math.PI*2);
+      ctx.fillStyle=isOrig?'rgba(62,201,126,0.15)':isDest?'rgba(242,95,92,0.15)':'rgba(245,158,11,0.12)';
+      ctx.fill();
+    }
+ 
+    // Node circle
+    ctx.beginPath();
+    ctx.arc(tx(n.x),ty(n.y),r,0,Math.PI*2);
+    const fill=isOrig?'#3ec97e':isDest?'#f25f5c':inPath?'#f59e0b':n.color;
+    ctx.fillStyle=fill;
+    ctx.fill();
+ 
+    ctx.strokeStyle=hov?'#fff':'rgba(255,255,255,0.15)';
+    ctx.lineWidth=hov?2:1;
+    ctx.stroke();
+ 
+    // Label
+    ctx.font=`${Math.max(8,10*scale)}px 'Syne', sans-serif`;
+    ctx.fillStyle='#fff';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(id,tx(n.x),ty(n.y));
+  }
+}
+ 
+function dijkstra(src,dst){
+  const dist={},prev={},vis=new Set();
+  for(const n in nodes) dist[n]=Infinity;
+  dist[src]=0;
+  const pq=[[0,src]];
+  while(pq.length){
+    pq.sort((a,b)=>a[0]-b[0]);
+    const[d,u]=pq.shift();
+    if(vis.has(u))continue;
+    vis.add(u);
+    for(const{node:v,w}of adj[u]){
+      if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prev[v]=u;pq.push([dist[v],v]);}
+    }
+  }
+  const path=[]; let cur=dst;
+  while(cur){path.unshift(cur);cur=prev[cur];}
+  return{path:path[0]===src?path:[],dist:dist[dst]};
+}
+ 
+function runDijkstra(){
+  if(selected.length<2){
+    document.getElementById('info-bar').innerHTML='⚠ Selecciona <span class="info-highlight">ORIGEN</span> y <span class="info-highlight">DESTINO</span> antes de calcular.';
+    return;
+  }
+  const{path,dist}=dijkstra(selected[0],selected[1]);
+  dijkPath=path;
+  if(path.length){
+    document.getElementById('info-bar').innerHTML=
+      `<span class="info-highlight">Ruta óptima:</span> ${path.join(' → ')} &nbsp;|&nbsp; <span class="info-highlight">Distancia: ${dist} m</span>`;
+  } else {
+    document.getElementById('info-bar').innerHTML=`Sin camino entre ${selected[0]} y ${selected[1]}.`;
+  }
+  draw();
+}
+ 
+function clearAll(){
+  selected=[];dijkPath=[];
+  document.getElementById('info-bar').innerHTML='Selecciona <span class="info-highlight">ORIGEN</span> y <span class="info-highlight">DESTINO</span>, luego presiona "Ruta más corta".';
+  draw();
+}
+function zoomIn(){scale*=1.15;draw();}
+function zoomOut(){scale*=0.87;draw();}
+function resetView(){fit();draw();}
+ 
+function getNode(px,py){
+  const x=(px-offX)/scale,y=(py-offY)/scale;
+  for(const[id,n]of Object.entries(nodes)){
+    if((x-n.x)**2+(y-n.y)**2<(NODE_R+4)**2) return id;
+  }
+  return null;
+}
+ 
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();
+  const id=getNode(e.clientX-r.left,e.clientY-r.top);
+  if(!id)return;
+  if(selected.length>=2) selected=[];
+  if(!selected.includes(id)) selected.push(id);
+  dijkPath=[];
+  const bar=document.getElementById('info-bar');
+  if(selected.length===1) bar.innerHTML=`🟢 <span class="info-highlight">Origen: ${selected[0]}</span> — Ahora selecciona el <span class="info-highlight">DESTINO</span>`;
+  else bar.innerHTML=`🟢 Origen: <span class="info-highlight">${selected[0]}</span> &nbsp; 🔴 Destino: <span class="info-highlight">${selected[1]}</span> — Presiona "Ruta más corta"`;
+  draw();
+});
+ 
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect();
+  const id=getNode(e.clientX-r.left,e.clientY-r.top);
+  if(id!==hoveredNode){hoveredNode=id;canvas.style.cursor=id?'pointer':'default';draw();}
+  if(dragging){offX+=e.clientX-lastMX;offY+=e.clientY-lastMY;lastMX=e.clientX;lastMY=e.clientY;draw();}
+});
+canvas.addEventListener('mousedown',e=>{dragging=true;lastMX=e.clientX;lastMY=e.clientY;});
+canvas.addEventListener('mouseup',()=>dragging=false);
+canvas.addEventListener('mouseleave',()=>dragging=false);
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  const f=e.deltaY<0?1.12:0.89;
+  offX=mx-(mx-offX)*f; offY=my-(my-offY)*f; scale*=f; draw();
+},{passive:false});
+ 
+window.addEventListener('resize',resize);
+resize();
+</script>
+</body>
+</html>
